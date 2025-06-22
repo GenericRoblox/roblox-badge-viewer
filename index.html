@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Roblox Badge Game Links (by User ID)</title>
+  <title>Roblox Badge Game Links</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
@@ -78,12 +78,10 @@
       }
 
       try {
-        // Use corsproxy.io to bypass Roblox's CORS restriction
-        const proxyUrl = `https://corsproxy.io/?https://badges.roblox.com/v1/users/${userId}/badges?limit=10&sortOrder=Desc`;
-        const badgeRes = await fetch(proxyUrl);
-        if (!badgeRes.ok) throw new Error('Failed to fetch badges.');
+        const res = await fetch(`/api/badges?userId=${userId}`);
+        if (!res.ok) throw new Error('Failed to fetch from backend');
 
-        const badgeJson = await badgeRes.json();
+        const badgeJson = await res.json();
         const badges = badgeJson.data;
 
         if (!badges || badges.length === 0) {
@@ -104,7 +102,7 @@
 
       } catch (err) {
         console.error('Error:', err);
-        list.innerHTML = '<li>Error fetching badge data. Please try again later.</li>';
+        list.innerHTML = '<li>Error fetching badge data.</li>';
       }
     }
   </script>
