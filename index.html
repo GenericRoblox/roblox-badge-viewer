@@ -1,110 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Roblox Badge Game Links</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f0f0f0;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
+<script>
+  async function fetchBadges() {
+    const userId = document.getElementById('userid').value.trim();
+    const list = document.getElementById('badgeLinks');
+    list.innerHTML = '';
+
+    if (!userId || isNaN(userId)) {
+      list.innerHTML = '<li>Please enter a valid numeric user ID.</li>';
+      return;
     }
 
-    .container {
-      background: white;
-      padding: 30px;
-      margin: auto;
-      max-width: 600px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
+    try {
+      const res = await fetch(`/api/badges?userId=${userId}`);
+      if (!res.ok) throw new Error('Failed to fetch from backend');
 
-    input {
-      padding: 10px;
-      width: 70%;
-      margin-bottom: 10px;
-    }
+      const badgeJson = await res.json();
+      const badges = badgeJson.data;
 
-    button {
-      padding: 10px 20px;
-      cursor: pointer;
-      background-color: #0074cc;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-
-    ul {
-      list-style: none;
-      padding-left: 0;
-      margin-top: 20px;
-    }
-
-    li {
-      margin: 10px 0;
-    }
-
-    a {
-      text-decoration: none;
-      color: #0074cc;
-      font-weight: bold;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Roblox Badge Game Links</h1>
-    <input id="userid" type="number" placeholder="Enter Roblox User ID">
-    <button onclick="fetchBadges()">Get Badges</button>
-    <ul id="badgeLinks"></ul>
-  </div>
-
-  <script>
-    async function fetchBadges() {
-      const userId = document.getElementById('userid').value.trim();
-      const list = document.getElementById('badgeLinks');
-      list.innerHTML = '';
-
-      if (!userId || isNaN(userId)) {
-        list.innerHTML = '<li>Please enter a valid numeric user ID.</li>';
+      if (!badges || badges.length === 0) {
+        list.innerHTML = '<li>No badges found for this user.</li>';
         return;
       }
 
-      try {
-        const res = await fetch(`/api/badges?userId=${userId}`);
-        if (!res.ok) throw new Error('Failed to fetch from backend');
+      for (const badge of badges) {
+        const placeId = badge.awarder?.id;
+        if (!placeId) continue;
 
-        const badgeJson = await res.json();
-        const badges = badgeJson.data;
+        // Step 1: Get universeId from placeId
+        const universeRes = await fetch(`https://apis.roblox.com/universes/v1/places/${placeId}/universe`);
+        if (!universeRes.ok) continue;
+        const universeData = await universeRes.json();
+        const universeId = universeData.universeId;
 
-        if (!badges || badges.length === 0) {
-          list.innerHTML = '<li>No badges found for this user.</li>';
-          return;
-        }
+        // Step 2: Get game info from universeId
+        const gameRes = await fetch(`https://games.roblox.com/v1/games?universeIds=${universeId}`);
+        if (!gameRes.ok) continue;
+        const gameData = await gameRes.json();
+        const gameName = gameData.data[0]?.name || 'Unknown Game';
 
-        badges.forEach(badge => {
-          const placeId = badge.awarder?.id;
-          const displayName = badge.displayName || badge.name;
-          if (!placeId) return;
-
-          const gameLink = `https://www.roblox.com/games/${placeId}`;
-          const li = document.createElement('li');
-          li.innerHTML = `<a href="${gameLink}" target="_blank">${displayName}</a>`;
-          list.appendChild(li);
-        });
-
-      } catch (err) {
-        console.error('Error:', err);
-        list.innerHTML = '<li>Error fetching badge data.</li>';
+        // Link to the game page
+        const gameLink = `https://www.roblox.com/games/${placeId}`;
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${gameLink}" target="_blank">${gameName}</a>`;
+        list.appendChild(li);
       }
+
+    } catch (err) {
+      console.error('Error:', err);
+      list.innerHTML = '<li>Error fetching badge or game data.</li>';
     }
-  </script>
-</body>
-</html>
+  }
+</script>
