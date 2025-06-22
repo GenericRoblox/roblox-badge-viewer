@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Roblox Recent Badge Places</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Roblox Recent Badge Places</h1>
+    <input id="username" type="text" placeholder="Enter Roblox username">
+    <button onclick="fetchBadges()">Get Badges</button>
+    <ul id="badgeLinks"></ul>
+  </div>
+
+  <script>
+    async function fetchBadges() {
+      const username = document.getElementById('username').value.trim();
+      const list = document.getElementById('badgeLinks');
+      list.innerHTML = '';
+
+      if (!username) {
+        list.innerHTML = '<li>Please enter a username.</li>';
+        return;
+      }
+
+      try {
+        const resUser = await fetch('https://users.roblox.com/v1/usernames/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usernames: [username] })
+        });
+
+        const userData = await resUser.json();
+        const userId = userData.data[0]?.id;
+
+        if (!userId) {
+          list.innerHTML = '<li>User not found.</li>';
+          return;
+        }
+
+        const resBadges = await fetch(`https://badges.roblox.com/v1/users/${userId}/badges?limit=10&sortOrder=Desc`);
+        const badgeData = await resBadges.json();
+
+        if (!badgeData.data.length) {
+          list.innerHTML = '<li>No badges found.</li>';
+          return;
+        }
+
+        badgeData.data.forEach(badge => {
+          const placeId = badge.awarder?.id;
+          const gameLink = `https://www.roblox.com/games/${placeId}`;
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${gameLink}" target="_blank">${badge.displayName}</a>`;
+          list.appendChild(li);
+        });
+      } catch (error) {
+        list.innerHTML = '<li>Error fetching data.</li>';
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
