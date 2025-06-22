@@ -3,7 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <title>Roblox Badge Game Links</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      margin: auto;
+      max-width: 600px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    input {
+      padding: 10px;
+      width: 70%;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+      background-color: #0074cc;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 20px;
+    }
+
+    li {
+      margin: 10px 0;
+    }
+
+    a {
+      text-decoration: none;
+      color: #0074cc;
+      font-weight: bold;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -25,37 +78,42 @@
       }
 
       try {
-        // Use Rover API to get user ID (CORS-safe)
-        const resUser = await fetch(`https://api.rover.link/v1/user/${username}`);
-        const userData = await resUser.json();
+        // Step 1: Get user ID from username using Rover API
+        const userRes = await fetch(`https://api.rover.link/v1/user/${username}`);
+        const userJson = await userRes.json();
 
-        if (!userData.robloxId) {
+        if (!userJson.robloxId) {
           list.innerHTML = '<li>User not found.</li>';
           return;
         }
 
-        const userId = userData.robloxId;
+        const userId = userJson.robloxId;
 
-        // Fetch recent badges
-        const resBadges = await fetch(`https://badges.roblox.com/v1/users/${userId}/badges?limit=10&sortOrder=Desc`);
-        const badgeData = await resBadges.json();
+        // Step 2: Get badges for user ID
+        const badgeRes = await fetch(`https://badges.roblox.com/v1/users/${userId}/badges?limit=10&sortOrder=Desc`);
+        const badgeJson = await badgeRes.json();
 
-        if (!badgeData.data || badgeData.data.length === 0) {
-          list.innerHTML = '<li>No badges found.</li>';
+        const badges = badgeJson.data;
+        if (!badges || badges.length === 0) {
+          list.innerHTML = '<li>No badges found for this user.</li>';
           return;
         }
 
-        // Show game links from badges
-        badgeData.data.forEach(badge => {
+        // Step 3: List each badge with a link to the place/game
+        badges.forEach(badge => {
           const placeId = badge.awarder?.id;
+          const displayName = badge.displayName || badge.name;
+          if (!placeId) return;
+
           const gameLink = `https://www.roblox.com/games/${placeId}`;
           const li = document.createElement('li');
-          li.innerHTML = `<a href="${gameLink}" target="_blank">${badge.displayName}</a>`;
+          li.innerHTML = `<a href="${gameLink}" target="_blank">${displayName}</a>`;
           list.appendChild(li);
         });
-      } catch (error) {
-        list.innerHTML = '<li>Error fetching data. Check console.</li>';
-        console.error(error);
+
+      } catch (err) {
+        console.error('Fetch error:', err);
+        list.innerHTML = '<li>Error fetching data. Please try again later.</li>';
       }
     }
   </script>
