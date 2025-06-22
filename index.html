@@ -78,7 +78,7 @@
       }
 
       try {
-        // Step 1: Get user ID from username using Rover API
+        // Step 1: Get user ID using Rover API
         const userRes = await fetch(`https://api.rover.link/v1/user/${username}`);
         const userJson = await userRes.json();
 
@@ -89,17 +89,19 @@
 
         const userId = userJson.robloxId;
 
-        // Step 2: Get badges for user ID
+        // Step 2: Fetch recent badges from Roblox API
         const badgeRes = await fetch(`https://badges.roblox.com/v1/users/${userId}/badges?limit=10&sortOrder=Desc`);
-        const badgeJson = await badgeRes.json();
+        if (!badgeRes.ok) throw new Error('Badges fetch failed');
 
+        const badgeJson = await badgeRes.json();
         const badges = badgeJson.data;
+
         if (!badges || badges.length === 0) {
           list.innerHTML = '<li>No badges found for this user.</li>';
           return;
         }
 
-        // Step 3: List each badge with a link to the place/game
+        // Step 3: Show each badge as a game link
         badges.forEach(badge => {
           const placeId = badge.awarder?.id;
           const displayName = badge.displayName || badge.name;
@@ -113,7 +115,8 @@
 
       } catch (err) {
         console.error('Fetch error:', err);
-        list.innerHTML = '<li>Error fetching data. Please try again later.</li>';
+        const list = document.getElementById('badgeLinks');
+        list.innerHTML = '<li>Something went wrong. Try again later.</li>';
       }
     }
   </script>
