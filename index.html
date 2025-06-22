@@ -78,7 +78,9 @@
       }
 
       try {
-        const badgeRes = await fetch(`https://badges.roblox.com/v1/users/${userId}/badges?limit=10&sortOrder=Desc`);
+        // Use corsproxy.io to bypass Roblox's CORS restriction
+        const proxyUrl = `https://corsproxy.io/?https://badges.roblox.com/v1/users/${userId}/badges?limit=10&sortOrder=Desc`;
+        const badgeRes = await fetch(proxyUrl);
         if (!badgeRes.ok) throw new Error('Failed to fetch badges.');
 
         const badgeJson = await badgeRes.json();
@@ -102,7 +104,7 @@
 
       } catch (err) {
         console.error('Error:', err);
-        list.innerHTML = '<li>Error fetching badge data.</li>';
+        list.innerHTML = '<li>Error fetching badge data. Please try again later.</li>';
       }
     }
   </script>
