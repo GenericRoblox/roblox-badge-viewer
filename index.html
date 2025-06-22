@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Roblox Badge Game Links</title>
+  <title>Roblox Badge Game Links (by User ID)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
@@ -61,37 +61,25 @@
 <body>
   <div class="container">
     <h1>Roblox Badge Game Links</h1>
-    <input id="username" type="text" placeholder="Enter Roblox username">
+    <input id="userid" type="number" placeholder="Enter Roblox User ID">
     <button onclick="fetchBadges()">Get Badges</button>
     <ul id="badgeLinks"></ul>
   </div>
 
   <script>
     async function fetchBadges() {
-      const username = document.getElementById('username').value.trim();
+      const userId = document.getElementById('userid').value.trim();
       const list = document.getElementById('badgeLinks');
       list.innerHTML = '';
 
-      if (!username) {
-        list.innerHTML = '<li>Please enter a username.</li>';
+      if (!userId || isNaN(userId)) {
+        list.innerHTML = '<li>Please enter a valid numeric user ID.</li>';
         return;
       }
 
       try {
-        // Step 1: Get user ID using Rover API
-        const userRes = await fetch(`https://api.rover.link/v1/user/${username}`);
-        const userJson = await userRes.json();
-
-        if (!userJson.robloxId) {
-          list.innerHTML = '<li>User not found.</li>';
-          return;
-        }
-
-        const userId = userJson.robloxId;
-
-        // Step 2: Fetch recent badges from Roblox API
         const badgeRes = await fetch(`https://badges.roblox.com/v1/users/${userId}/badges?limit=10&sortOrder=Desc`);
-        if (!badgeRes.ok) throw new Error('Badges fetch failed');
+        if (!badgeRes.ok) throw new Error('Failed to fetch badges.');
 
         const badgeJson = await badgeRes.json();
         const badges = badgeJson.data;
@@ -101,7 +89,6 @@
           return;
         }
 
-        // Step 3: Show each badge as a game link
         badges.forEach(badge => {
           const placeId = badge.awarder?.id;
           const displayName = badge.displayName || badge.name;
@@ -114,9 +101,8 @@
         });
 
       } catch (err) {
-        console.error('Fetch error:', err);
-        const list = document.getElementById('badgeLinks');
-        list.innerHTML = '<li>Something went wrong. Try again later.</li>';
+        console.error('Error:', err);
+        list.innerHTML = '<li>Error fetching badge data.</li>';
       }
     }
   </script>
