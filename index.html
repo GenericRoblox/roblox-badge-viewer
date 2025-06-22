@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Roblox Recent Badge Places</title>
+  <title>Roblox Badge Game Links</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <h1>Roblox Recent Badge Places</h1>
+    <h1>Roblox Badge Game Links</h1>
     <input id="username" type="text" placeholder="Enter Roblox username">
     <button onclick="fetchBadges()">Get Badges</button>
     <ul id="badgeLinks"></ul>
@@ -25,28 +25,27 @@
       }
 
       try {
-        const resUser = await fetch('https://users.roblox.com/v1/usernames/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ usernames: [username] })
-        });
-
+        // Use Rover API to get user ID (CORS-safe)
+        const resUser = await fetch(`https://api.rover.link/v1/user/${username}`);
         const userData = await resUser.json();
-        const userId = userData.data[0]?.id;
 
-        if (!userId) {
+        if (!userData.robloxId) {
           list.innerHTML = '<li>User not found.</li>';
           return;
         }
 
+        const userId = userData.robloxId;
+
+        // Fetch recent badges
         const resBadges = await fetch(`https://badges.roblox.com/v1/users/${userId}/badges?limit=10&sortOrder=Desc`);
         const badgeData = await resBadges.json();
 
-        if (!badgeData.data.length) {
+        if (!badgeData.data || badgeData.data.length === 0) {
           list.innerHTML = '<li>No badges found.</li>';
           return;
         }
 
+        // Show game links from badges
         badgeData.data.forEach(badge => {
           const placeId = badge.awarder?.id;
           const gameLink = `https://www.roblox.com/games/${placeId}`;
@@ -55,7 +54,7 @@
           list.appendChild(li);
         });
       } catch (error) {
-        list.innerHTML = '<li>Error fetching data.</li>';
+        list.innerHTML = '<li>Error fetching data. Check console.</li>';
         console.error(error);
       }
     }
